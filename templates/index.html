@@ -1,0 +1,71 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Content Generator v2</title>
+    <link rel="stylesheet" href="/static/style.css">
+    <script>
+        function createAccordion(title, content) {
+            const progressDiv = document.getElementById('progress');
+            const accordion = document.createElement('button');
+            accordion.className = 'accordion';
+            accordion.innerText = title;
+            const panel = document.createElement('div');
+            panel.className = 'panel';
+             if (typeof content === 'object') {
+                panel.innerHTML = `<pre>${JSON.stringify(content, null, 2)}</pre>`;
+            } else {
+                panel.innerHTML = `<pre>${content}</pre>`;
+            }
+            progressDiv.appendChild(accordion);
+            progressDiv.appendChild(panel);
+            accordion.addEventListener('click', function() {
+                this.classList.toggle('active');
+                panel.classList.toggle('show');
+            });
+        }
+
+        function submitForm(event) {
+            event.preventDefault();
+            const formData = new FormData(event.target);
+            const topic = formData.get('topic');
+            const progressDiv = document.getElementById('progress');
+            progressDiv.style.display = 'block';
+            progressDiv.innerHTML = '';
+
+            const eventSource = new EventSource('/progress?topic=' + encodeURIComponent(topic));
+            eventSource.onmessage = function(event) {
+                try {
+                    const data = JSON.parse(event.data);
+                     if (data.type === 'start') {
+                        createAccordion('Starting...', data.message);
+                    } else if (data.type === 'progress') {
+                        createAccordion(data.message, '');
+                    } else if (data.type === 'complete') {
+                        createAccordion(data.title, data.data);
+                    } else if (data.type === 'error') {
+                        createAccordion('Error', data.message);
+                    }
+                } catch (e) {
+                    console.error('Error parsing event data:', e, event.data);
+                    createAccordion('Error', 'Could not parse server message');
+                }
+            };
+            eventSource.onerror = function() {
+                createAccordion('Error', 'Unable to connect to the server.');
+                eventSource.close();
+            };
+        }
+    </script>
+</head>
+<body>
+    <div class="container">
+        <h1>Content Generator</h1>
+        <form onsubmit="submitForm(event)">
+            <label for="topic">Enter Topic:</label><br>
+            <input type="text" id="topic" name="topic" required><br><br>
+            <button type="submit">Generate</button>
+        </form>
+        <div id="progress" class="progress"></div>
+    </div>
+</body>
+</html>

@@ -1,0 +1,12 @@
+run = ["python", "main.py"]
+language = "python3"
+
+[packager]
+ignoredPaths = [".git"]
+
+[packager.features]
+packageSearch = true
+guessImports = true
+
+[env]
+PYTHONPATH = "."

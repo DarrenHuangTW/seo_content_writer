@@ -1,0 +1,83 @@
+<!DOCTYPE html>
+<html>
+<head>
+    <title>Content Generation Results</title>
+    <style>
+        .accordion {
+            cursor: pointer;
+            padding: 10px;
+            width: 100%;
+            border: none;
+            text-align: left;
+            outline: none;
+            transition: 0.4s;
+        }
+
+        .active, .accordion:hover {
+            background-color: #ccc;
+        }
+
+        .panel {
+            padding: 0 18px;
+            display: none;
+            background-color: white;
+            overflow: hidden;
+        }
+
+        .panel.show {
+            display: block;
+        }
+    </style>
+    <script>
+        document.addEventListener('DOMContentLoaded', function() {
+            const acc = document.getElementsByClassName('accordion');
+            for (let i = 0; i < acc.length; i++) {
+                acc[i].addEventListener('click', function() {
+                    this.classList.toggle('active');
+                    const panel = this.nextElementSibling;
+                    if (panel.style.display === 'block') {
+                        panel.style.display = 'none';
+                    } else {
+                        panel.style.display = 'block';
+                    }
+                });
+            }
+        });
+    </script>
+</head>
+<body>
+    <h1>Content Generation Results for: {{ results.topic_query }}</h1>
+
+    <button class="accordion">Content Analysis</button>
+    <div class="panel">
+        <pre>{{ results.content_analysis }}</pre>
+    </div>
+
+    <button class="accordion">Content Plan</button>
+    <div class="panel">
+        <pre>{{ results.content_plan }}</pre>
+    </div>
+
+    <button class="accordion">Content Draft</button>
+    <div class="panel">
+        <pre>{{ results.content_draft }}</pre>
+    </div>
+
+    <button class="accordion">Proofread Draft</button>
+    <div class="panel">
+        <pre>{{ results.proofread_draft }}</pre>
+    </div>
+
+    <button class="accordion">SEO Recommendations</button>
+    <div class="panel">
+        <pre>{{ results.seo_recommendations }}</pre>
+    </div>
+
+    <button class="accordion active">Final Deliverable</button>
+    <div class="panel show">
+        <pre>{{ results.final_deliverable }}</pre>
+    </div>
+
+    <a href="/">Back to Home</a>
+</body>
+</html>
