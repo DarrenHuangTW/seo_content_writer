@@ -32,26 +32,37 @@
             progressDiv.style.display = 'block';
             progressDiv.innerHTML = '';
 
+            let isCompleted = false; 
+
             const eventSource = new EventSource('/progress?topic=' + encodeURIComponent(topic));
             eventSource.onmessage = function(event) {
                 try {
                     const data = JSON.parse(event.data);
-                     if (data.type === 'start') {
+                    if (data.type === 'start') {
                         createAccordion('Starting...', data.message);
                     } else if (data.type === 'progress') {
-                        createAccordion(data.message, '');
                     } else if (data.type === 'complete') {
                         createAccordion(data.title, data.data);
+                        if (data.step === 'final') {
+                            isCompleted = true;  // Set the flag before closing
+                            eventSource.close();
+                        }
                     } else if (data.type === 'error') {
                         createAccordion('Error', data.message);
+                        eventSource.close();
                     }
                 } catch (e) {
                     console.error('Error parsing event data:', e, event.data);
                     createAccordion('Error', 'Could not parse server message');
+                    eventSource.close();
                 }
             };
+
             eventSource.onerror = function() {
-                createAccordion('Error', 'Unable to connect to the server.');
+                // Only show error if no content has been generated yet AND we haven't completed successfully
+                if (!document.querySelector('.accordion') && !isCompleted) {
+                    createAccordion('Error', 'Unable to connect to the server.');
+                }
                 eventSource.close();
             };
         }
