@@ -2,32 +2,8 @@
 <html>
 <head>
     <title>Content Generation Results</title>
-    <style>
-        .accordion {
-            cursor: pointer;
-            padding: 10px;
-            width: 100%;
-            border: none;
-            text-align: left;
-            outline: none;
-            transition: 0.4s;
-        }
-
-        .active, .accordion:hover {
-            background-color: #ccc;
-        }
-
-        .panel {
-            padding: 0 18px;
-            display: none;
-            background-color: white;
-            overflow: hidden;
-        }
-
-        .panel.show {
-            display: block;
-        }
-    </style>
+    <!-- Add TailwindCSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script>
         document.addEventListener('DOMContentLoaded', function() {
             const acc = document.getElementsByClassName('accordion');
@@ -45,39 +21,41 @@
         });
     </script>
 </head>
-<body>
-    <h1>Content Generation Results for: {{ results.topic_query }}</h1>
+<body class="bg-gray-100">
+    <div class="container mx-auto max-w-2xl bg-white p-8 mt-10 rounded-lg shadow-lg">
+        <h1 class="text-2xl font-bold text-center mb-6">Content Generation Results for: {{ results.topic_query }}</h1>
 
-    <button class="accordion">Content Analysis</button>
-    <div class="panel">
-        <pre>{{ results.content_analysis }}</pre>
+        <button class="accordion w-full text-left py-2 px-4 bg-gray-200 hover:bg-gray-300 rounded-t">Content Analysis</button>
+        <div class="panel p-4 bg-white border border-t-0 border-gray-300">
+            <pre>{{ results.content_analysis }}</pre>
+        </div>
+
+        <button class="accordion w-full text-left py-2 px-4 bg-gray-200 hover:bg-gray-300">Content Plan</button>
+        <div class="panel p-4 bg-white border border-t-0 border-gray-300">
+            <pre>{{ results.content_plan }}</pre>
+        </div>
+
+        <button class="accordion w-full text-left py-2 px-4 bg-gray-200 hover:bg-gray-300">Content Draft</button>
+        <div class="panel p-4 bg-white border border-t-0 border-gray-300">
+            <pre>{{ results.content_draft }}</pre>
+        </div>
+
+        <button class="accordion w-full text-left py-2 px-4 bg-gray-200 hover:bg-gray-300">Proofread Draft</button>
+        <div class="panel p-4 bg-white border border-t-0 border-gray-300">
+            <pre>{{ results.proofread_draft }}</pre>
+        </div>
+
+        <button class="accordion w-full text-left py-2 px-4 bg-gray-200 hover:bg-gray-300">SEO Recommendations</button>
+        <div class="panel p-4 bg-white border border-t-0 border-gray-300">
+            <pre>{{ results.seo_recommendations }}</pre>
+        </div>
+
+        <button class="accordion w-full text-left py-2 px-4 bg-gray-200 hover:bg-gray-300 active">Final Deliverable</button>
+        <div class="panel p-4 bg-white border border-t-0 border-gray-300 show">
+            <pre>{{ results.final_deliverable }}</pre>
+        </div>
+
+        <a href="/" class="block text-center mt-4 text-blue-500 hover:underline">Back to Home</a>
     </div>
-
-    <button class="accordion">Content Plan</button>
-    <div class="panel">
-        <pre>{{ results.content_plan }}</pre>
-    </div>
-
-    <button class="accordion">Content Draft</button>
-    <div class="panel">
-        <pre>{{ results.content_draft }}</pre>
-    </div>
-
-    <button class="accordion">Proofread Draft</button>
-    <div class="panel">
-        <pre>{{ results.proofread_draft }}</pre>
-    </div>
-
-    <button class="accordion">SEO Recommendations</button>
-    <div class="panel">
-        <pre>{{ results.seo_recommendations }}</pre>
-    </div>
-
-    <button class="accordion active">Final Deliverable</button>
-    <div class="panel show">
-        <pre>{{ results.final_deliverable }}</pre>
-    </div>
-
-    <a href="/">Back to Home</a>
 </body>
 </html>

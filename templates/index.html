@@ -2,81 +2,153 @@
 <html>
 <head>
     <title>Content Generator v2</title>
-    <link rel="stylesheet" href="/static/style.css">
+    <!-- Add TailwindCSS CDN -->
+    <link href="https://cdn.jsdelivr.net/npm/tailwindcss@2.2.19/dist/tailwind.min.css" rel="stylesheet">
     <script>
-        function createAccordion(title, content) {
-            const progressDiv = document.getElementById('progress');
-            const accordion = document.createElement('button');
-            accordion.className = 'accordion';
-            accordion.innerText = title;
-            const panel = document.createElement('div');
-            panel.className = 'panel';
-             if (typeof content === 'object') {
-                panel.innerHTML = `<pre>${JSON.stringify(content, null, 2)}</pre>`;
-            } else {
-                panel.innerHTML = `<pre>${content}</pre>`;
-            }
-            progressDiv.appendChild(accordion);
-            progressDiv.appendChild(panel);
-            accordion.addEventListener('click', function() {
-                this.classList.toggle('active');
-                panel.classList.toggle('show');
-            });
-        }
-
         function submitForm(event) {
             event.preventDefault();
             const formData = new FormData(event.target);
             const topic = formData.get('topic');
             const progressDiv = document.getElementById('progress');
-            progressDiv.style.display = 'block';
-            progressDiv.innerHTML = '';
-
-            let isCompleted = false; 
-
+            progressDiv.innerHTML = ''; // Clear previous content
+            const stepTemplate = document.getElementById('step-template');
+        
+            const steps = {
+                'serp': 'Retrieving SERP Data',
+                'semrush': 'Processing SEMRush Data',
+                'content': 'Fetching Content from URLs',
+                'analysis': 'Analyzing Content',
+                'plan': 'Generating Content Plan',
+                'draft': 'Creating Content Draft',
+                'proofread': 'Proofreading Content',
+                'seo': 'Generating SEO Recommendations',
+                'final': 'Compiling Final Deliverable'
+            };
+        
+            // Create step elements
+            for (const stepKey in steps) {
+                const stepElement = stepTemplate.content.cloneNode(true).querySelector('.step-item');
+                stepElement.dataset.step = stepKey; // Store the step key
+                stepElement.querySelector('.step-label').textContent = steps[stepKey];
+                progressDiv.appendChild(stepElement);
+        
+                // Add event listener for accordion toggle
+                const accordionHeader = stepElement.querySelector('.accordion-header');
+                const accordionContent = stepElement.querySelector('.accordion-content');
+                const accordionIcon = stepElement.querySelector('.accordion-icon');
+        
+                accordionHeader.addEventListener('click', () => {
+                    accordionContent.classList.toggle('open');
+                    accordionIcon.classList.toggle('rotate-180');
+                });
+            }
+        
             const eventSource = new EventSource('/progress?topic=' + encodeURIComponent(topic));
+        
             eventSource.onmessage = function(event) {
                 try {
                     const data = JSON.parse(event.data);
-                    if (data.type === 'start') {
-                        createAccordion('Starting...', data.message);
-                    } else if (data.type === 'progress') {
+                    const stepKey = data.step;
+                    const stepElement = progressDiv.querySelector(`.step-item[data-step="${stepKey}"]`);
+                    if (!stepElement) return;
+        
+                    const statusSpan = stepElement.querySelector('.step-status');
+                    const resultsDiv = stepElement.querySelector('.step-results');
+                    const accordionContent = stepElement.querySelector('.accordion-content');
+                    const accordionIcon = stepElement.querySelector('.accordion-icon'); // Get the icon here
+        
+                    if (data.type === 'progress') {
+                        statusSpan.innerHTML = `
+                            <svg class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+                                <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                                <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                            </svg>`;
+                        if (data.message) {
+                            stepElement.querySelector('.step-label').textContent = steps[stepKey] + ` - ${data.message}`;
+                        }
                     } else if (data.type === 'complete') {
-                        createAccordion(data.title, data.data);
-                        if (data.step === 'final') {
-                            isCompleted = true;  // Set the flag before closing
-                            eventSource.close();
+                        statusSpan.innerHTML = `
+                            <svg class="h-5 w-5 text-green-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <polyline points="9 11 12 14 22 4"></polyline>
+                                <path d="M21 12v7a2 2 0 0 1-2 2H5a2 2 0 0 1-2-2v-7"></path>
+                            </svg>`;
+                        stepElement.querySelector('.step-label').textContent = steps[stepKey] + (data.title ? ` - ${data.title}` : ' - Completed');
+                        if (data.data) {
+                            resultsDiv.innerHTML = `<pre class="whitespace-pre-wrap text-sm">${typeof data.data === 'object' ? JSON.stringify(data.data, null, 2) : data.data}</pre>`;
+                            accordionContent.classList.add('open'); // Ensure 'open' class is added
+                            accordionIcon.classList.add('rotate-180'); // Ensure icon is rotated
                         }
                     } else if (data.type === 'error') {
-                        createAccordion('Error', data.message);
+                        statusSpan.innerHTML = `
+                            <svg class="h-5 w-5 text-red-500" viewBox="0 0 24 24" fill="none" stroke="currentColor" stroke-width="2" stroke-linecap="round" stroke-linejoin="round">
+                                <line x1="18" y1="6" x2="6" y2="18"></line>
+                                <line x1="6" y1="6" x2="18" y2="18"></line>
+                            </svg>`;
+                        stepElement.querySelector('.step-label').textContent = steps[stepKey] + ` - Error: ${data.message}`;
+                        resultsDiv.innerHTML = `<pre class="whitespace-pre-wrap text-sm text-red-500">${data.message}</pre>`;
+                        accordionContent.classList.add('open'); // Ensure 'open' class is added for errors too
+                        accordionIcon.classList.add('rotate-180'); // Ensure icon is rotated for errors too
+                    }
+        
+                    if (data.step === 'final') {
                         eventSource.close();
                     }
                 } catch (e) {
                     console.error('Error parsing event data:', e, event.data);
-                    createAccordion('Error', 'Could not parse server message');
+                    // Handle error display appropriately
                     eventSource.close();
                 }
             };
-
+        
             eventSource.onerror = function() {
-                // Only show error if no content has been generated yet AND we haven't completed successfully
-                if (!document.querySelector('.accordion') && !isCompleted) {
-                    createAccordion('Error', 'Unable to connect to the server.');
-                }
+                // Handle connection error
+                console.error('Error connecting to the server.');
                 eventSource.close();
             };
         }
-    </script>
+        </script>
 </head>
-<body>
-    <div class="container">
-        <h1>Content Generator</h1>
-        <form onsubmit="submitForm(event)">
-            <label for="topic">Enter Topic:</label><br>
-            <input type="text" id="topic" name="topic" required><br><br>
-            <button type="submit">Generate</button>
+<body class="bg-gray-100">
+    <div class="container mx-auto max-w-2xl bg-white p-8 mt-10 rounded-lg shadow-md">
+        <h1 class="text-3xl font-bold text-center mb-8">Content Generator</h1>
+        <form onsubmit="submitForm(event)" class="space-y-4">
+            <div>
+                <label for="topic" class="block text-gray-700 font-semibold">Enter Topic:</label>
+                <input type="text" id="topic" name="topic" required class="w-full p-3 border rounded-md">
+            </div>
+            <div>
+                <button type="submit" class="w-full bg-green-600 hover:bg-green-700 text-white font-bold py-3 rounded-md transition duration-300">Generate</button>
+            </div>
         </form>
-        <div id="progress" class="progress"></div>
+        <div id="progress" class="mt-8 space-y-4">
+            <!-- Steps will be added here by JavaScript -->
+        </div>
+
+        <template id="step-template">
+            <div class="step-item flex flex-col mb-4 border rounded p-4">
+                <div class="flex items-center justify-between">
+                    <span class="step-label font-semibold mr-2"></span>
+                    <span class="step-status flex items-center">
+                        <!-- Status icons (spinner, check) will go here -->
+                        <svg class="animate-spin h-5 w-5 text-blue-500" fill="none" viewBox="0 0 24 24">
+                            <circle class="opacity-25" cx="12" cy="12" r="10" stroke="currentColor" stroke-width="4"></circle>
+                            <path class="opacity-75" fill="currentColor" d="M4 12a8 8 0 018-8V0C5.373 0 0 5.373 0 12h4z"></path>
+                        </svg>
+                    </span>
+                </div>
+                <button type="button" class="accordion-header flex items-center justify-between w-full mt-2 py-2 px-3 bg-gray-100 text-gray-700 rounded hover:bg-gray-200 focus:outline-none">
+                    <span class="text-sm font-medium">View Results</span>
+                    <svg class="accordion-icon h-4 w-4 text-gray-500 transform transition-transform duration-200" fill="none" viewBox="0 0 24 24" stroke="currentColor">
+                        <path stroke-linecap="round" stroke-linejoin="round" stroke-width="2" d="M19 9l-7 7-7-7" />
+                    </svg>
+                </button>
+                <div class="accordion-content mt-2 overflow-hidden max-h-0 transition-max-h duration-300">
+                    <div class="step-results">
+                        <!-- Results for this step will be displayed here -->
+                    </div>
+                </div>
+            </div>
+        </template>
     </div>
 </body>
 </html>

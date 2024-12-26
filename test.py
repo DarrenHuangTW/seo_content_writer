@@ -53,21 +53,16 @@ def get_serpapi_data(topic_query):
         "google_domain": "google.com",
         "api_key": os.getenv("SERPAPI_KEY")
     }
-    response = requests.get(base_url, params=params)
-    if handle_api_errors(response, "SerpAPI"):
-        results = response.json()
-        data = []
-        for result in results.get('organic_results', []):
-            data.append({
-                'Position': result.get('position'),
-                'Link': result.get('link'),
-                'Title': result.get('title')
-            })
-        df_serp = pd.DataFrame(data)
-        logging.info("Successfully retrieved SerpAPI data.")
-        return df_serp
-    else:
-        return pd.DataFrame()
+    import time
+    time.sleep(2)  # Simulate API call delay
+    # Dummy data
+    data = [
+        {'Position': 1, 'Link': 'http://example.com/1', 'Title': 'Example Title 1'},
+        {'Position': 2, 'Link': 'http://example.com/2', 'Title': 'Example Title 2'}
+    ]
+    df_serp = pd.DataFrame(data)
+    logging.info("Using dummy SerpAPI data.")
+    return df_serp
 
 # --- Step 3: SEMRush Data Retrieval and Processing ---
 
@@ -81,20 +76,15 @@ def get_semrush_data(url, api_key=os.getenv("SEMRUSH_API_KEY")):
         f"&url={quote(url)}&database={config['semrush_database']}"
         f"&display_filter={config['semrush_display_filter']}&display_sort={config['semrush_display_sort']}"
     )
-    response = requests.get(full_url)
-    if handle_api_errors(response, "SEMRush"):
-        decoded_output = response.content.decode('utf-8')
-        lines = decoded_output.split('\r\n')
-        headers = lines[0].split(';')
-        json_data = []
-        for line in lines[1:]:
-            if line:
-                values = line.split(';')
-                record = {header: value for header, value in zip(headers, values)}
-                json_data.append(record)
-        return json_data
-    else:
-        return []
+    import time
+    time.sleep(2)  # Simulate API call delay
+    # Dummy data
+    json_data = [
+        {'Keyword': 'example', 'Search Volume': '1000', 'Position': '1'},
+        {'Keyword': 'test', 'Search Volume': '500', 'Position': '2'}
+    ]
+    logging.info("Using dummy SEMRush data.")
+    return json_data
 
 def process_semrush_data(df_results):
     df_results['SEMRush_Data'] = df_results['Link'].apply(get_semrush_data)
@@ -140,17 +130,11 @@ def fetch_content(url):
         'X-Timeout': str(config["jina_api_timeout"])
     }
     try:
-        response = requests.get(f'https://r.jina.ai/{url}', headers=headers)
-        if handle_api_errors(response, "Jina AI Reader"):
-            response_json = response.json()
-            if response_json['code'] == 200:
-                logging.info(f"Successfully fetched content from {url}.")
-                return response_json['data']['content']
-            else:
-                logging.warning(f"Jina API error for {url}: {response_json.get('error', 'Unknown error')}")
-                return f"ERROR: {url} blocks Jina API or other error occurred."
-        else:
-            return f"ERROR: Failed to use Jina API for {url}."
+        import time
+        time.sleep(2)  # Simulate API call delay
+        # Dummy content
+        logging.info(f"Using dummy content for {url}.")
+        return "This is dummy content for testing purposes."
 
     except requests.exceptions.RequestException as e:
         logging.error(f"Request error fetching content from {url}: {e}")
@@ -162,13 +146,11 @@ def fetch_content(url):
 # --- Step 5-10: AI Model Interactions ---
 
 def interact_with_ai(messages, model=config["openai_model"], temperature=config["openai_temperature"]):
-    try:
-        response = client.chat.completions.create(model=model, messages=messages, temperature=temperature)
-        result = response.choices[0].message.content
-        return result
-    except Exception as e:
-        logging.error(f"Error during AI interaction: {e}")
-        return None
+    import time
+    time.sleep(2)  # Simulate API call delay
+    # Dummy response
+    logging.info("Using dummy OpenAI response.")
+    return "This is a dummy response for testing purposes."
 
 # --- Main Workflow ---
 
